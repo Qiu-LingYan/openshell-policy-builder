@@ -26,18 +26,109 @@
   var yamlOutput = $("yaml-output");
   var copyBtn = $("copy-btn");
   var downloadBtn = $("download-btn");
+  var langBtn = $("lang-btn");
+
+  // ---------- i18n ----------
+
+  var I18N = {
+    zh: {
+      docTitle: "OpenShell 策略生成器",
+      title: "OpenShell 策略生成器",
+      langBtn: "EN",
+      warn1: '⚠️ <strong>enforcement 默认是 audit</strong>：不阻断，只记录。本工具默认帮你切到 <code>enforce</code>。',
+      warn2: '⚠️ <strong>不设 protocol 时，rules 形同虚设</strong>：代理只检查 host/port/binary，不检查 HTTP 方法或路径。',
+      warn3: '⚠️ <strong>access: full + enforcement: audit = 零限制</strong>：官方 skill 文档明确警告，full access 在 audit 模式下"所有流量直接通过，等同于仅监控策略"。',
+      "label-host": 'host <span class="req">*</span>',
+      "label-rules": "rules（allow）",
+      "opt-proto-none": "不设置（仅 L4 检查）",
+      "opt-access-custom": "自定义",
+      "hint-l4": "当前仅做 L4 检查。rules 和 access 不会生效。",
+      "hint-tcp": "⚠️ tcp 模式下 L7 字段（enforcement/access/rules）不输出。",
+      "hint-enforcement": "audit 只记录不阻断，enforce 返回 403。",
+      "chk-deny": "添加 deny 规则（优先级高于 allow）",
+      "chk-tls": "tls: skip（仅用于非 HTTP 客户端）",
+      "hint-tls": "⚠️ 勾选后 L7 检查、凭据注入、TLS 终止全部失效，仅用于原生 TCP 客户端（如数据库）。",
+      "h2-output": "生成的 YAML",
+      "btn-copy": "复制",
+      "btn-download": "下载候选策略并校验",
+      "hint-validate": '下载 candidate.yaml 后，在终端运行：<code>openshell-prover check candidate.yaml --boundary your_boundary.yaml</code>，或使用附带的 <code>validate.py</code>。',
+      footer: "非官方社区工具 · 生成的 YAML 需自行用 openshell-prover 校验",
+      "btn-add-rule": "+ 添加规则",
+      "btn-add-deny": "+ 添加 deny 规则",
+      copied: "已复制 ✓",
+      sampleSuffix: "# ↑ 请填写 host 后生成策略",
+      accessHints: {
+        "read-only": "read-only（REST）：GET, HEAD, OPTIONS",
+        "read-write": "read-write（REST）：GET, HEAD, OPTIONS + POST, PUT, PATCH",
+        "full": "full：所有方法与路径（放弃 L7 控制）",
+        "custom": "自定义：在下方 rules 编辑器逐条指定 allow/deny"
+      }
+    },
+    en: {
+      docTitle: "OpenShell Policy Builder",
+      title: "OpenShell Policy Builder",
+      langBtn: "中文",
+      warn1: '⚠️ <strong>enforcement defaults to audit</strong>: logged but NOT blocked. This tool defaults to <code>enforce</code> for you.',
+      warn2: '⚠️ <strong>Without protocol, rules are useless</strong>: the proxy only checks host/port/binary, not HTTP methods or paths.',
+      warn3: '⚠️ <strong>access: full + enforcement: audit = zero restriction</strong>: the official skill docs warn that full access in audit mode "passes all traffic through, equivalent to a monitor-only policy".',
+      "label-host": 'host <span class="req">*</span>',
+      "label-rules": "rules (allow)",
+      "opt-proto-none": "Not set (L4 only)",
+      "opt-access-custom": "Custom",
+      "hint-l4": "L4 checking only. rules and access have no effect.",
+      "hint-tcp": "⚠️ In tcp mode, L7 fields (enforcement/access/rules) are omitted.",
+      "hint-enforcement": "audit only logs without blocking; enforce returns 403.",
+      "chk-deny": "Add deny rules (higher priority than allow)",
+      "chk-tls": "tls: skip (non-HTTP clients only)",
+      "hint-tls": "⚠️ Once checked, L7 checks, credential injection and TLS termination all stop working. For native TCP clients (e.g. databases) only.",
+      "h2-output": "Generated YAML",
+      "btn-copy": "Copy",
+      "btn-download": "Download candidate policy & validate",
+      "hint-validate": 'After downloading candidate.yaml, run in a terminal: <code>openshell-prover check candidate.yaml --boundary your_boundary.yaml</code>, or use the bundled <code>validate.py</code>.',
+      footer: "Unofficial community tool · Validate the generated YAML yourself with openshell-prover",
+      "btn-add-rule": "+ Add rule",
+      "btn-add-deny": "+ Add deny rule",
+      copied: "Copied ✓",
+      sampleSuffix: "# ↑ Fill in host to generate a policy",
+      accessHints: {
+        "read-only": "read-only (REST): GET, HEAD, OPTIONS",
+        "read-write": "read-write (REST): GET, HEAD, OPTIONS + POST, PUT, PATCH",
+        "full": "full: all methods and paths (no L7 control)",
+        "custom": "Custom: specify allow/deny rules one by one below"
+      }
+    }
+  };
+
+  var currentLang = localStorage.getItem("lang") ||
+    (navigator.language && navigator.language.indexOf("zh") === 0 ? "zh" : "en");
+
+  function applyLang() {
+    var dict = I18N[currentLang];
+    document.title = dict.docTitle;
+    document.documentElement.lang = currentLang === "zh" ? "zh-CN" : "en";
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      if (dict[key] !== undefined) el.textContent = dict[key];
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n-html");
+      if (dict[key] !== undefined) el.innerHTML = dict[key];
+    });
+    langBtn.textContent = dict.langBtn;
+    updateAccessHint();
+  }
+
+  langBtn.addEventListener("click", function () {
+    currentLang = currentLang === "zh" ? "en" : "zh";
+    localStorage.setItem("lang", currentLang);
+    applyLang();
+  });
 
   var METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "*"];
 
-  var ACCESS_HINTS = {
-    "read-only": "read-only（REST）：GET, HEAD, OPTIONS",
-    "read-write": "read-write（REST）：GET, HEAD, OPTIONS + POST, PUT, PATCH",
-    "full": "full：所有方法与路径（放弃 L7 控制）",
-    "custom": "自定义：在下方 rules 编辑器逐条指定 allow/deny"
-  };
-
   function updateAccessHint() {
-    accessHint.textContent = ACCESS_HINTS[accessEl.value] || "";
+    var hints = I18N[currentLang].accessHints;
+    accessHint.textContent = hints[accessEl.value] || "";
   }
 
   // ---------- 规则行 ----------
@@ -206,7 +297,7 @@
     updateVisibility();
     updateAccessHint();
     var yaml = buildYaml();
-    yamlOutput.textContent = yaml || SAMPLE_YAML + "# ↑ 请填写 host 后生成策略";
+    yamlOutput.textContent = yaml || SAMPLE_YAML + I18N[currentLang].sampleSuffix;
   }
 
   // ---------- 事件绑定 ----------
@@ -223,7 +314,7 @@
   copyBtn.addEventListener("click", function () {
     navigator.clipboard.writeText(yamlOutput.textContent).then(function () {
       var old = copyBtn.textContent;
-      copyBtn.textContent = "已复制 ✓";
+      copyBtn.textContent = I18N[currentLang].copied;
       setTimeout(function () { copyBtn.textContent = old; }, 1500);
     });
   });
@@ -238,7 +329,8 @@
     URL.revokeObjectURL(a.href);
   });
 
-  // 初始化：默认给一条规则行示例
+  // 初始化
+  applyLang();
   generate();
   createRuleRow(rulesContainer);
   rulesField.classList.toggle("hidden", accessEl.value !== "custom");

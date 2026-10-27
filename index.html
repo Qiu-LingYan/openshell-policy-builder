@@ -8,107 +8,110 @@
 </head>
 <body>
   <header>
-    <h1>OpenShell 策略生成器</h1>
+    <div class="title-row">
+      <h1 data-i18n="title">OpenShell 策略生成器</h1>
+      <button type="button" id="lang-btn" class="btn secondary lang-btn">EN</button>
+    </div>
     <div class="warnings">
-      <div class="warning-card">⚠️ <strong>enforcement 默认是 audit</strong>：不阻断，只记录。本工具默认帮你切到 <code>enforce</code>。</div>
-      <div class="warning-card">⚠️ <strong>不设 protocol 时，rules 形同虚设</strong>：代理只检查 host/port/binary，不检查 HTTP 方法或路径。</div>
-      <div class="warning-card">⚠️ <strong>access: full + enforcement: audit = 零限制</strong>：官方 skill 文档明确警告，full access 在 audit 模式下"所有流量直接通过，等同于仅监控策略"。</div>
+      <div class="warning-card" data-i18n-html="warn1">⚠️ <strong>enforcement 默认是 audit</strong>：不阻断，只记录。本工具默认帮你切到 <code>enforce</code>。</div>
+      <div class="warning-card" data-i18n-html="warn2">⚠️ <strong>不设 protocol 时，rules 形同虚设</strong>：代理只检查 host/port/binary，不检查 HTTP 方法或路径。</div>
+      <div class="warning-card" data-i18n-html="warn3">⚠️ <strong>access: full + enforcement: audit = 零限制</strong>：官方 skill 文档明确警告，full access 在 audit 模式下"所有流量直接通过，等同于仅监控策略"。</div>
     </div>
   </header>
 
   <main>
     <section class="form-area">
       <div class="field">
-        <label for="policy-name">policy name</label>
+        <label for="policy-name" data-i18n="label-name">policy name</label>
         <input type="text" id="policy-name" value="my-policy">
       </div>
 
       <div class="field">
-        <label for="host">host <span class="req">*</span></label>
+        <label for="host" data-i18n-html="label-host">host <span class="req">*</span></label>
         <input type="text" id="host" placeholder="api.github.com">
       </div>
 
       <div class="field">
-        <label for="port">port</label>
+        <label for="port" data-i18n="label-port">port</label>
         <input type="number" id="port" value="443">
       </div>
 
       <div class="field">
-        <label for="protocol">protocol</label>
+        <label for="protocol" data-i18n="label-protocol">protocol</label>
         <select id="protocol">
-          <option value="">不设置（仅 L4 检查）</option>
+          <option value="" data-i18n="opt-proto-none">不设置（仅 L4 检查）</option>
           <option value="rest" selected>rest</option>
           <option value="websocket">websocket</option>
           <option value="graphql">graphql</option>
           <option value="tcp">tcp</option>
         </select>
-        <p class="hint hidden" id="l4-hint">当前仅做 L4 检查。rules 和 access 不会生效。</p>
-        <p class="hint warning-text hidden" id="tcp-hint">⚠️ tcp 模式下 L7 字段（enforcement/access/rules）不输出。</p>
+        <p class="hint hidden" id="l4-hint" data-i18n="hint-l4">当前仅做 L4 检查。rules 和 access 不会生效。</p>
+        <p class="hint warning-text hidden" id="tcp-hint" data-i18n="hint-tcp">⚠️ tcp 模式下 L7 字段（enforcement/access/rules）不输出。</p>
       </div>
 
       <div class="field" id="enforcement-field">
-        <label>enforcement</label>
+        <label data-i18n="label-enforcement">enforcement</label>
         <div class="radio-group">
           <label class="radio"><input type="radio" name="enforcement" value="audit"> audit</label>
           <label class="radio"><input type="radio" name="enforcement" value="enforce" checked> enforce</label>
         </div>
-        <p class="hint">audit 只记录不阻断，enforce 返回 403。</p>
+        <p class="hint" data-i18n="hint-enforcement">audit 只记录不阻断，enforce 返回 403。</p>
       </div>
 
       <div class="field" id="access-field">
-        <label for="access">access</label>
+        <label for="access" data-i18n="label-access">access</label>
         <select id="access">
           <option value="read-only" selected>read-only</option>
           <option value="read-write">read-write</option>
           <option value="full">full</option>
-          <option value="custom">自定义</option>
+          <option value="custom" data-i18n="opt-access-custom">自定义</option>
         </select>
         <p class="hint" id="access-hint"></p>
       </div>
 
       <div class="field hidden" id="rules-field">
-        <label>rules（allow）</label>
+        <label data-i18n-html="label-rules">rules（allow）</label>
         <div id="rules-container"></div>
-        <button type="button" id="add-rule" class="btn secondary">+ 添加规则</button>
+        <button type="button" id="add-rule" class="btn secondary" data-i18n="btn-add-rule">+ 添加规则</button>
       </div>
 
       <div class="field hidden" id="deny-toggle-field">
         <label class="checkbox-label">
           <input type="checkbox" id="deny-enabled">
-          添加 deny 规则（优先级高于 allow）
+          <span data-i18n="chk-deny">添加 deny 规则（优先级高于 allow）</span>
         </label>
       </div>
 
       <div class="field hidden" id="deny-field">
         <label>deny_rules</label>
         <div id="deny-container"></div>
-        <button type="button" id="add-deny" class="btn secondary">+ 添加 deny 规则</button>
+        <button type="button" id="add-deny" class="btn secondary" data-i18n="btn-add-deny">+ 添加 deny 规则</button>
       </div>
 
       <div class="field" id="tls-field">
         <label class="checkbox-label">
           <input type="checkbox" id="tls-skip">
-          tls: skip（仅用于非 HTTP 客户端）
+          <span data-i18n="chk-tls">tls: skip（仅用于非 HTTP 客户端）</span>
         </label>
-        <p class="hint warning-text hidden" id="tls-hint">⚠️ 勾选后 L7 检查、凭据注入、TLS 终止全部失效，仅用于原生 TCP 客户端（如数据库）。</p>
+        <p class="hint warning-text hidden" id="tls-hint" data-i18n="hint-tls">⚠️ 勾选后 L7 检查、凭据注入、TLS 终止全部失效，仅用于原生 TCP 客户端（如数据库）。</p>
       </div>
     </section>
 
     <section class="output-area">
       <div class="output-header">
-        <h2>生成的 YAML</h2>
-        <button type="button" id="copy-btn" class="btn primary">复制</button>
+        <h2 data-i18n="h2-output">生成的 YAML</h2>
+        <button type="button" id="copy-btn" class="btn primary" data-i18n="btn-copy">复制</button>
       </div>
       <pre id="yaml-output"></pre>
       <div class="validate-actions">
-        <button type="button" id="download-btn" class="btn secondary">下载候选策略并校验</button>
-        <p class="hint">下载 candidate.yaml 后，在终端运行：<code>openshell-prover check candidate.yaml --boundary your_boundary.yaml</code>，或使用附带的 <code>validate.py</code>。</p>
+        <button type="button" id="download-btn" class="btn secondary" data-i18n="btn-download">下载候选策略并校验</button>
+        <p class="hint" data-i18n-html="hint-validate">下载 candidate.yaml 后，在终端运行：<code>openshell-prover check candidate.yaml --boundary your_boundary.yaml</code>，或使用附带的 <code>validate.py</code>。</p>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>非官方社区工具 · 生成的 YAML 需自行用 openshell-prover 校验</p>
+    <p data-i18n="footer">非官方社区工具 · 生成的 YAML 需自行用 openshell-prover 校验</p>
   </footer>
 
   <script src="app.js"></script>

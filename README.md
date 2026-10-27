@@ -1,21 +1,24 @@
 # OpenShell Policy Builder
 
-非官方社区工具，与 NVIDIA 无关联。OpenShell 官方默认 `enforcement: audit` 意味着策略**不阻断**，Agent 仍可执行写/删操作。这个工具默认帮你切到 `enforce`，并可视化生成 L7 rules，无需手写 YAML。
+**English** | [中文文档](README.zh-CN.md)
 
-**在线使用**：https://qiulingyan.top/openshell-policy-builder/
+Unofficial community tool, not affiliated with NVIDIA. OpenShell's official default `enforcement: audit` means policies **do not block** — the agent can still perform write/delete operations. This tool defaults to `enforce` and visually generates L7 rules, so you never hand-write YAML.
 
-相比其他可视化编辑器（如 @contextware/openshellpolicy），本工具更轻——零依赖单页、无构建、无 CDN——并且聚焦一件事：避开 `audit` 默认值的坑。
+**Try it online**: https://qiulingyan.top/openshell-policy-builder/
 
-## 使用
+Compared to other visual editors (e.g. @contextware/openshellpolicy), this one is lighter — a single zero-dependency page, no build step, no CDN — and focuses on one thing: avoiding the `audit` default trap.
+
+## Usage
+
+Open the online URL above, or serve locally:
 
 ```bash
 python3 -m http.server 8080
-# 或直接用上面的 GitHub Pages 在线版
 ```
 
-零依赖：纯 HTML/CSS/JS，无构建步骤、无外部库。
+Zero dependencies: plain HTML/CSS/JS, no build step, no external libraries. UI is available in English and Chinese (toggle top-right; preference persists).
 
-## 生成的策略结构（示例）
+## Generated policy structure (example)
 
 ```yaml
 network_policies:
@@ -28,23 +31,23 @@ network_policies:
         access: read-only
 ```
 
-支持 `rest` / `websocket` / `graphql` / `tcp` / 不设 protocol（仅 L4），自定义 allow/deny rules，`tls: skip`。
+Supports `rest` / `websocket` / `graphql` / `tcp` / protocol unset (L4 only), custom allow/deny rules, and `tls: skip`.
 
-## 校验
+## Validation
 
-生成 YAML 后点击"下载候选策略并校验"得到 `candidate.yaml`，然后：
+Click "Download candidate policy & validate" to get `candidate.yaml`, then:
 
 ```bash
 openshell-prover check candidate.yaml --boundary your_boundary.yaml
-# 或
+# or
 python3 validate.py candidate.yaml your_boundary.yaml
-# 或直接建 sandbox 试跑：
+# or create a sandbox directly:
 # openshell sandbox create --policy ./candidate.yaml -- claude
 ```
 
-## 安全提示（引自官方文档）
+## Safety notes (from the official docs)
 
-- `enforcement` 默认 `audit`：只记录不阻断，Agent 仍可执行写操作。选 `enforce` 才会返回 403。
-- 不设 `protocol` 时：只做 TCP 流放行，不检查 payload，`rules` 和 `access` 完全无效。
-- `access: full` + `enforcement: audit` = 零限制：官方 skill 文档明确警告，full access 在 audit 模式下"所有流量直接通过，等同于仅监控策略"。
-- `tls: skip` 会使 L7 检查、凭据注入、TLS 终止全部失效，仅用于原生 TCP 客户端。
+- `enforcement` defaults to `audit`: logs but does not block — the agent can still perform write operations. Only `enforce` returns 403.
+- With `protocol` unset: TCP traffic is simply allowed through without payload inspection; `rules` and `access` have no effect.
+- `access: full` + `enforcement: audit` = zero restriction: the official skill docs warn that full access in audit mode "passes all traffic through, equivalent to a monitor-only policy".
+- `tls: skip` disables L7 checks, credential injection and TLS termination — for native TCP clients (e.g. databases) only.

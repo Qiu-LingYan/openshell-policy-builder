@@ -92,6 +92,9 @@ input:focus, select:focus { outline: none; border-color: var(--accent); }
 .btn.secondary { background: var(--border); color: var(--text); }
 .btn:hover { filter: brightness(1.15); }
 
+.title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.lang-btn { padding: 4px 12px; font-weight: 600; }
+
 .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 
 #yaml-output {
