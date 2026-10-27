@@ -2,7 +2,7 @@
 
 非官方社区工具，与 NVIDIA 无关联。OpenShell 官方默认 `enforcement: audit` 意味着策略**不阻断**，Agent 仍可执行写/删操作。这个工具默认帮你切到 `enforce`，并可视化生成 L7 rules，无需手写 YAML。
 
-**在线使用**：https://qiu-lingyan.github.io/openshell-policy-builder/
+**在线使用**：https://qiulingyan.top/openshell-policy-builder/
 
 相比其他可视化编辑器（如 @contextware/openshellpolicy），本工具更轻——零依赖单页、无构建、无 CDN——并且聚焦一件事：避开 `audit` 默认值的坑。
 
