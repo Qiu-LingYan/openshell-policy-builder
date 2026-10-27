@@ -12,6 +12,8 @@
   var enforcementField = $("enforcement-field");
   var accessField = $("access-field");
   var accessEl = $("access");
+  var accessHint = $("access-hint");
+  var policyNameEl = $("policy-name");
   var rulesField = $("rules-field");
   var rulesContainer = $("rules-container");
   var denyToggleField = $("deny-toggle-field");
@@ -26,6 +28,17 @@
   var downloadBtn = $("download-btn");
 
   var METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "*"];
+
+  var ACCESS_HINTS = {
+    "read-only": "read-only（REST）：GET, HEAD, OPTIONS",
+    "read-write": "read-write（REST）：GET, HEAD, OPTIONS + POST, PUT, PATCH",
+    "full": "full：所有方法与路径（放弃 L7 控制）",
+    "custom": "自定义：在下方 rules 编辑器逐条指定 allow/deny"
+  };
+
+  function updateAccessHint() {
+    accessHint.textContent = ACCESS_HINTS[accessEl.value] || "";
+  }
 
   // ---------- 规则行 ----------
 
@@ -137,67 +150,68 @@
 
     var protocol = protocolEl.value;
     var lines = [];
-    lines.push("version: 1");
-    lines.push("network_policy:");
-    lines.push("  endpoints:");
-    lines.push("    - host: " + host);
-    lines.push("      port: " + (portEl.value || "443"));
+    lines.push("network_policies:");
+    lines.push("  - name: " + (policyNameEl.value.trim() || "my-policy"));
+    lines.push("    endpoints:");
+    lines.push("      - host: " + host);
+    lines.push("        port: " + (portEl.value || "443"));
 
     if (protocol) {
-      lines.push("      protocol: " + protocol);
+      lines.push("        protocol: " + protocol);
     }
 
     if (isL7()) {
       var enforcement = document.querySelector('input[name="enforcement"]:checked').value;
-      lines.push("      enforcement: " + enforcement);
+      lines.push("        enforcement: " + enforcement);
 
       var access = accessEl.value;
       if (access !== "custom") {
-        lines.push("      access: " + access);
+        lines.push("        access: " + access);
       } else {
         var rules = collectRules(rulesContainer);
         if (rules.length) {
-          lines.push("      rules:");
-          yamlRulesBlock(lines, "        ", rules, true);
+          lines.push("        rules:");
+          yamlRulesBlock(lines, "          ", rules, true);
         }
         if (denyEnabled.checked) {
           var denies = collectRules(denyContainer);
           if (denies.length) {
-            lines.push("      deny_rules:");
-            yamlRulesBlock(lines, "        ", denies, false);
+            lines.push("        deny_rules:");
+            yamlRulesBlock(lines, "          ", denies, false);
           }
         }
       }
     }
 
     if (tlsSkip.checked) {
-      lines.push("      tls: skip");
+      lines.push("        tls: skip");
     }
 
     return lines.join("\n") + "\n";
   }
 
   var SAMPLE_YAML = [
-    "version: 1",
-    "network_policy:",
-    "  endpoints:",
-    "    - host: api.github.com",
-    "      port: 443",
-    "      protocol: rest",
-    "      enforcement: enforce",
-      "      access: read-only",
+    "network_policies:",
+    "  - name: my-policy",
+    "    endpoints:",
+    "      - host: api.github.com",
+    "        port: 443",
+    "        protocol: rest",
+    "        enforcement: enforce",
+    "        access: read-only",
     "",
   ].join("\n");
 
   function generate() {
     updateVisibility();
+    updateAccessHint();
     var yaml = buildYaml();
     yamlOutput.textContent = yaml || SAMPLE_YAML + "# ↑ 请填写 host 后生成策略";
   }
 
   // ---------- 事件绑定 ----------
 
-  [hostEl, portEl, protocolEl, accessEl, tlsSkip, denyEnabled].forEach(function (el) {
+  [hostEl, portEl, protocolEl, accessEl, tlsSkip, denyEnabled, policyNameEl].forEach(function (el) {
     el.addEventListener("change", generate);
     el.addEventListener("input", generate);
   });

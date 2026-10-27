@@ -12,12 +12,17 @@
     <div class="warnings">
       <div class="warning-card">⚠️ <strong>enforcement 默认是 audit</strong>：不阻断，只记录。本工具默认帮你切到 <code>enforce</code>。</div>
       <div class="warning-card">⚠️ <strong>不设 protocol 时，rules 形同虚设</strong>：代理只检查 host/port/binary，不检查 HTTP 方法或路径。</div>
-      <div class="warning-card">⚠️ <strong>access: full 等于放弃 L7 控制</strong>：除非你确实需要所有方法和路径，否则用 read-only 或自定义 rules。</div>
+      <div class="warning-card">⚠️ <strong>access: full + enforcement: audit = 零限制</strong>：官方 skill 文档明确警告，full access 在 audit 模式下"所有流量直接通过，等同于仅监控策略"。</div>
     </div>
   </header>
 
   <main>
     <section class="form-area">
+      <div class="field">
+        <label for="policy-name">policy name</label>
+        <input type="text" id="policy-name" value="my-policy">
+      </div>
+
       <div class="field">
         <label for="host">host <span class="req">*</span></label>
         <input type="text" id="host" placeholder="api.github.com">
@@ -58,6 +63,7 @@
           <option value="full">full</option>
           <option value="custom">自定义</option>
         </select>
+        <p class="hint" id="access-hint"></p>
       </div>
 
       <div class="field hidden" id="rules-field">
